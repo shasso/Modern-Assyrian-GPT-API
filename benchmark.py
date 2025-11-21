@@ -148,10 +148,10 @@ def main():
     # Benchmark longer prompt
     print("4. Benchmark: Longer generation (100 tokens)")
     long_results = benchmark_generate(
-        prompt="ܫܠܡܐ ܥܠܝܟܘܢ",
+        prompt="ܘܥܒ݂ܸܕܠܹܗ ܡܲܠܟܘܼܬܵܐ",
         max_tokens=100,
         temperature=0.7,
-        num_runs=5
+        num_runs=100
     )
     print()
     
