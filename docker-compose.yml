@@ -13,7 +13,7 @@ services:
       # Model selection parameters (see main.py manifest loader)
       # Set MODEL_ID to choose which entry in manifest.json to load at startup.
       # Ensure manifest.json exists under ./models (mounted read-only) or adjust path.
-      - MODEL_ID=assyrian-default
+      - MODEL_ID=Assur-SPM8K-Scribes-4M
       - MODEL_MANIFEST_PATH=/app/models/manifest.json
     # Simpler GPU request; requires Docker with NVIDIA runtime / toolkit installed
     gpus: all

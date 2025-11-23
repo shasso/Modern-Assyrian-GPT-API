@@ -160,13 +160,13 @@ def _load_manifest():
         # Fallback: synthesize a manifest from hardcoded paths
         return {
             "models": {
-                "assyrian-default": {
-                    "tokenizer": "models/assyrian_8000.model",
+                "Assur-SPM8K-Scribes-4M": {
+                    "tokenizer": "models/ot_8000.model",
                     "weights": "models/GPTot40.pth",
                     "config": {}
                 }
             },
-            "default": "assyrian-default"
+            "default": "Assur-SPM8K-Scribes-4M"
         }
     try:
         with open(manifest_path, "r", encoding="utf-8") as f:
@@ -175,13 +175,13 @@ def _load_manifest():
         print(f"Failed to load manifest {manifest_path}: {e}; using fallback")
         return {
             "models": {
-                "assyrian-default": {
-                    "tokenizer": "models/assyrian_8000.model",
+                "Assur-SPM8K-Scribes-4M": {
+                    "tokenizer": "models/ot_8000.model",
                     "weights": "models/GPTot40.pth",
                     "config": {}
                 }
             },
-            "default": "assyrian-default"
+            "default": "Assur-SPM8K-Scribes-4M"
         }
 
 def load_model_and_tokenizer(model_id: str | None = None):

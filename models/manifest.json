@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "default": "assyrian-default",
+  "default": "Assur-SPM8K-Scribes-4M",
   "models": {
-    "assyrian-default": {
-      "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
+    "Assur-SPM8K-Scribes-4M": {
+      "description": "Assur-SPM8K-Scribes-4M: GPT model trained on Old Testament text",
       "tokenizer": "models/ot_8000.model",
       "weights": "models/GPTot40.pth",
       "config": {
@@ -14,8 +14,8 @@
       },
       "tags": ["baseline", "fast"]
     },
-    "bible-gpt-small": {
-      "description": "Smaller GPT model trained on Modern Assyrian Old+New Testament text",
+    "Assur-SPM32K-Biblica-10M": {
+      "description": "Assur-SPM32K-Biblica-10M: GPT model trained on Bible text",
       "tokenizer": "models/bible_32000.model",
       "weights": "models/GPTbible40.pth",
       "config": {
