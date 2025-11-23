@@ -126,12 +126,12 @@ curl http://localhost:8000/models | jq
 Response:
 ```json
 {
-  "active": "assyrian-default",
-  "default": "assyrian-default",
+  "active": "Assur-SPM8K-Scribes-4M",
+  "default": "Assur-SPM8K-Scribes-4M",
   "models": {
-    "assyrian-default": {
+    "Assur-SPM8K-Scribes-4M": {
       "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
-      "tokenizer": "models/assyrian_8000.model",
+      "tokenizer": "models/ot_8000.model",
       "weights": "models/GPTot40.pth",
       "config": {
         "n_layer": 3,
@@ -140,6 +140,18 @@ Response:
         "block_size": 128
       },
       "tags": ["baseline", "fast"]
+    },
+    "Assur-SPM32K-Biblica-10M": {
+      "description": "GPT model trained on Modern Assyrian Old+New Testament text",
+      "tokenizer": "models/bible_32000.model",
+      "weights": "models/GPTbible40.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": ["smaller", "faster"]
     }
   }
 }
@@ -149,7 +161,7 @@ Response:
 ```bash
 curl -X POST http://localhost:8000/models/select \
   -H 'Content-Type: application/json' \
-  -d '{"model_id":"assyrian-default"}'
+  -d '{"model_id":"Assur-SPM8K-Scribes-4M"}'
 ```
 
 #### Per-Request Model Override
@@ -159,7 +171,7 @@ curl -X POST http://localhost:8000/generate \
   -d '{
     "prompt": "ܫܠܡܐ",
     "max_new_tokens": 30,
-    "model_id": "assyrian-default"
+    "model_id": "Assur-SPM32K-Biblica-10M"
   }'
 ```
 
@@ -215,7 +227,7 @@ environment:
   - NVIDIA_VISIBLE_DEVICES=all       # Expose all GPUs
   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
   - PYTHONUNBUFFERED=1
-  - MODEL_ID=assyrian-default        # Default model to load
+  - MODEL_ID=Assur-SPM8K-Scribes-4M  # Default model to load
   - MODEL_MANIFEST_PATH=/app/models/manifest.json  # Model registry
 ```
 
@@ -226,11 +238,11 @@ The `models/manifest.json` file defines available models:
 ```json
 {
   "version": 1,
-  "default": "assyrian-default",
+  "default": "Assur-SPM8K-Scribes-4M",
   "models": {
-    "assyrian-default": {
+    "Assur-SPM8K-Scribes-4M": {
       "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
-      "tokenizer": "models/assyrian_8000.model",
+      "tokenizer": "models/ot_8000.model",
       "weights": "models/GPTot40.pth",
       "config": {
         "n_layer": 3,
@@ -239,6 +251,18 @@ The `models/manifest.json` file defines available models:
         "block_size": 128
       },
       "tags": ["baseline", "fast"]
+    },
+    "Assur-SPM32K-Biblica-10M": {
+      "description": "GPT model trained on Modern Assyrian Old+New Testament text",
+      "tokenizer": "models/bible_32000.model",
+      "weights": "models/GPTbible40.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": ["smaller", "faster"]
     }
   }
 }
