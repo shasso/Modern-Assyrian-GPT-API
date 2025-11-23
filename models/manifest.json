@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "default": "assyrian-default",
+  "models": {
+    "assyrian-default": {
+      "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
+      "tokenizer": "models/ot_8000.model",
+      "weights": "models/GPTot40.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": ["baseline", "fast"]
+    },
+    "bible-gpt-small": {
+      "description": "Smaller GPT model trained on Modern Assyrian Old+New Testament text",
+      "tokenizer": "models/bible_32000.model",
+      "weights": "models/GPTbible40.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": ["smaller", "faster"]
+    },
+
+    "assyrian-placeholder-large": {
+      "description": "Placeholder for a larger model (add weights file, e.g. GPTot80.pth)",
+      "tokenizer": "models/assyrian_8000.model",
+      "weights": "models/GPTot80.pth",
+      "config": {
+        "n_layer": 6,
+        "n_head": 8,
+        "n_embd": 512,
+        "block_size": 128
+      },
+      "tags": ["larger", "higher-quality"],
+      "disabled": true
+    }
+  }
+}

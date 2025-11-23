@@ -6,6 +6,7 @@ A FastAPI service for generating Modern Assyrian text using a trained GPT model 
 
 - **SentencePiece Tokenization**: Uses 8,000-piece Modern Assyrian tokenizer
 - **GPT Model**: Transformer-based language model trained on Modern Assyrian Old Testament
+- **Multi-Model Support**: Load and switch between models via manifest.json
 - **REST API**: FastAPI-based service with automatic documentation
 - **GPU Acceleration**: NVIDIA PyTorch container with CUDA 13.0 support
 - **Performance Metrics**: Real-time token throughput and latency tracking
@@ -22,7 +23,9 @@ syriac-gpt-api/
 ├── docker-compose.yml  # Compose config with GPU support
 ├── docker-entrypoint.sh # CUDA diagnostics on startup
 ├── test_api.py         # API testing script
+├── benchmark.py        # Performance benchmarking script
 ├── models/             # Model files (mounted volume)
+│   ├── manifest.json   # Model registry and configuration
 │   ├── GPTot40.pth     # Trained model weights
 │   ├── assyrian_8000.model  # SentencePiece model
 │   └── assyrian_8000.vocab  # SentencePiece vocabulary
@@ -110,6 +113,55 @@ Returns detailed performance stats:
 - `avg_tokens_per_second`: Sustained decode throughput
 - `last_request_latency`: Wall time for last request (seconds)
 - `gpu_memory_allocated`: Current GPU memory usage (bytes)
+- `active_model_id`: Currently loaded model ID
+- `available_models`: List of models from manifest
+
+### Model Management
+
+#### List Available Models
+```bash
+curl http://localhost:8000/models | jq
+```
+
+Response:
+```json
+{
+  "active": "assyrian-default",
+  "default": "assyrian-default",
+  "models": {
+    "assyrian-default": {
+      "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
+      "tokenizer": "models/assyrian_8000.model",
+      "weights": "models/GPTot40.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": ["baseline", "fast"]
+    }
+  }
+}
+```
+
+#### Switch Active Model
+```bash
+curl -X POST http://localhost:8000/models/select \
+  -H 'Content-Type: application/json' \
+  -d '{"model_id":"assyrian-default"}'
+```
+
+#### Per-Request Model Override
+```bash
+curl -X POST http://localhost:8000/generate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "prompt": "ܫܠܡܐ",
+    "max_new_tokens": 30,
+    "model_id": "assyrian-default"
+  }'
+```
 
 ### Generate Text
 ```bash
@@ -163,6 +215,43 @@ environment:
   - NVIDIA_VISIBLE_DEVICES=all       # Expose all GPUs
   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
   - PYTHONUNBUFFERED=1
+  - MODEL_ID=assyrian-default        # Default model to load
+  - MODEL_MANIFEST_PATH=/app/models/manifest.json  # Model registry
+```
+
+### Model Manifest
+
+The `models/manifest.json` file defines available models:
+
+```json
+{
+  "version": 1,
+  "default": "assyrian-default",
+  "models": {
+    "assyrian-default": {
+      "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
+      "tokenizer": "models/assyrian_8000.model",
+      "weights": "models/GPTot40.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": ["baseline", "fast"]
+    }
+  }
+}
+```
+
+**Add a new model:**
+1. Place weights and tokenizer in `models/`
+2. Add entry to `manifest.json`
+3. Restart service or use `/models/select` endpoint
+
+**Override at startup:**
+```bash
+MODEL_ID=assyrian-medium docker compose up -d
 ```
 
 ### CPU Fallback

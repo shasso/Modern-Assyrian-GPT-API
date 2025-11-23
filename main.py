@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi import Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import torch
@@ -8,6 +9,9 @@ import sentencepiece as spm
 from pathlib import Path
 import math
 import time
+import os
+import json
+import threading
 from typing import Optional
 
 app = FastAPI(title="Modern Assyrian GPT API", description="API for generating Modern Assyrian text using GPT model")
@@ -124,6 +128,10 @@ class Model(nn.Module):
 model = None
 tokenizer = None
 device = "cuda" if torch.cuda.is_available() else "cpu"
+active_model_id = None
+model_registry = {}
+registry_default = None
+_model_lock = threading.Lock()
 
 # Metrics counters
 generation_requests = 0
@@ -132,32 +140,101 @@ total_generation_time = 0.0
 last_request_latency = 0.0
 last_request_tokens = 0
 
-def load_model_and_tokenizer():
-    global model, tokenizer
+def _load_manifest():
+    """Load a manifest JSON describing available model/tokenizer pairs.
 
-    # Load tokenizer
-    tokenizer_model_path = Path("models/assyrian_8000.model")
-    if not tokenizer_model_path.exists():
-        raise FileNotFoundError(f"Tokenizer model not found at {tokenizer_model_path}")
+    Expected structure:
+    {
+      "models": {
+         "assyrian-small": {
+            "tokenizer": "models/assyrian_8000.model",
+            "weights": "models/GPTot40.pth",
+            "config": {"n_layer":3, "n_head":4, "n_embd":256, "block_size":128}
+         }
+      },
+      "default": "assyrian-small"
+    }
+    """
+    manifest_path = os.getenv("MODEL_MANIFEST_PATH", "models/manifest.json")
+    if not Path(manifest_path).exists():
+        # Fallback: synthesize a manifest from hardcoded paths
+        return {
+            "models": {
+                "assyrian-default": {
+                    "tokenizer": "models/assyrian_8000.model",
+                    "weights": "models/GPTot40.pth",
+                    "config": {}
+                }
+            },
+            "default": "assyrian-default"
+        }
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Failed to load manifest {manifest_path}: {e}; using fallback")
+        return {
+            "models": {
+                "assyrian-default": {
+                    "tokenizer": "models/assyrian_8000.model",
+                    "weights": "models/GPTot40.pth",
+                    "config": {}
+                }
+            },
+            "default": "assyrian-default"
+        }
 
-    tokenizer = spm.SentencePieceProcessor()
-    tokenizer.load(str(tokenizer_model_path))
+def load_model_and_tokenizer(model_id: str | None = None):
+    """Load model & tokenizer for given model_id (or default). Thread-safe."""
+    global model, tokenizer, active_model_id, model_registry, registry_default
+    with _model_lock:
+        if not model_registry:
+            manifest = _load_manifest()
+            model_registry = manifest.get("models", {})
+            registry_default = manifest.get("default") or next(iter(model_registry.keys()))
 
-    # Load model
-    config = Config()
-    config.vocab_size = tokenizer.get_piece_size()
+        # Resolve model id
+        if model_id is None:
+            env_model = os.getenv("MODEL_ID")
+            model_id = env_model or registry_default
 
-    model = Model(config)
-    model_path = "models/GPTot40.pth"
-    if not Path(model_path).exists():
-        raise FileNotFoundError(f"Model weights not found at {model_path}")
+        if active_model_id == model_id and model is not None and tokenizer is not None:
+            return  # Already loaded
 
-    state_dict = torch.load(model_path, map_location=device)
-    model.load_state_dict(state_dict)
-    model.to(device)
-    model.eval()
+        entry = model_registry.get(model_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail=f"Model id '{model_id}' not found")
 
-    print(f"Model and tokenizer loaded successfully on {device}")
+        tok_path = Path(entry.get("tokenizer"))
+        weights_path = Path(entry.get("weights"))
+        if not tok_path.exists():
+            raise FileNotFoundError(f"Tokenizer not found: {tok_path}")
+        if not weights_path.exists():
+            raise FileNotFoundError(f"Weights not found: {weights_path}")
+
+        # Load tokenizer
+        tokenizer_obj = spm.SentencePieceProcessor()
+        tokenizer_obj.load(str(tok_path))
+
+        # Build config (override defaults if provided)
+        config_overrides = entry.get("config", {}) or {}
+        cfg = Config()
+        for k, v in config_overrides.items():
+            if hasattr(cfg, k):
+                setattr(cfg, k, v)
+        cfg.vocab_size = tokenizer_obj.get_piece_size()
+
+        model_obj = Model(cfg)
+        state_dict = torch.load(str(weights_path), map_location=device)
+        model_obj.load_state_dict(state_dict)
+        model_obj.to(device)
+        model_obj.eval()
+
+        # Swap globals
+        model = model_obj
+        tokenizer = tokenizer_obj
+        active_model_id = model_id
+        print(f"Loaded model '{model_id}' on {device} (vocab={cfg.vocab_size})")
 
 # Sampling function
 def sample(idx, max_new_tokens, temperature=1.0, top_k=None):
@@ -189,6 +266,7 @@ class GenerateRequest(BaseModel):
     max_new_tokens: int = 50
     temperature: float = 1.0
     top_k: Optional[int] = None
+    model_id: Optional[str] = None  # Optional override per request
 
 class GenerateResponse(BaseModel):
     generated_text: str
@@ -248,6 +326,9 @@ async def health():
 async def generate_text(request: GenerateRequest):
     try:
         global generation_requests, total_generated_tokens, total_generation_time, last_request_latency, last_request_tokens
+        # Optional per-request model switch
+        if request.model_id and request.model_id != active_model_id:
+            load_model_and_tokenizer(request.model_id)
         start_time = time.perf_counter()
         # Encode prompt
         prompt_tokens = tokenizer.encode(request.prompt)
@@ -298,7 +379,27 @@ async def metrics():
         "last_request_latency": last_request_latency,
         "last_request_tokens": last_request_tokens,
         "gpu_memory_allocated": torch.cuda.memory_allocated(0) if cuda_available and cuda_device_count > 0 else 0,
+        "active_model_id": active_model_id,
+        "available_models": list(model_registry.keys()),
     }
+
+@app.get("/models")
+async def list_models():
+    if not model_registry:
+        _ = _load_manifest()
+    return {
+        "active": active_model_id,
+        "default": registry_default,
+        "models": model_registry,
+    }
+
+@app.post("/models/select")
+async def select_model(data: dict = Body(...)):
+    model_id = data.get("model_id")
+    if not model_id:
+        raise HTTPException(status_code=400, detail="Missing model_id")
+    load_model_and_tokenizer(model_id)
+    return {"status": "ok", "active_model_id": active_model_id}
 
 if __name__ == "__main__":
     import uvicorn
