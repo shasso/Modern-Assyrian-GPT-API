@@ -157,6 +157,8 @@ Response:
 }
 ```
 
+> Reverse Proxy Note: When serving the client via a separate Nginx or ingress, ensure `/models` and `/models/select` are forwarded. Missing these routes causes the client dropdown to show only "API Default".
+
 #### Switch Active Model
 ```bash
 curl -X POST http://localhost:8000/models/select \
