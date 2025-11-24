@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "default": "Assur-SPM8K-Scribes-4M",
+  "default": "Makaru-SPM8K-Scribes-4M",
   "models": {
-    "Assur-SPM8K-Scribes-4M": {
-      "description": "Assur-SPM8K-Scribes-4M: GPT model trained on Old Testament text",
+    "Makaru-SPM8K-Scribes-4M": {
+      "description": "Makaru-SPM8K-Scribes-4M: GPT model trained on Old Testament text",
       "tokenizer": "models/ot_8000.model",
       "weights": "models/GPTot40.pth",
       "config": {
@@ -12,10 +12,13 @@
         "n_embd": 256,
         "block_size": 128
       },
-      "tags": ["baseline", "fast"]
+      "tags": [
+        "baseline",
+        "fast"
+      ]
     },
-    "Assur-SPM32K-Biblica-10M": {
-      "description": "Assur-SPM32K-Biblica-10M: GPT model trained on Bible text",
+    "Makaru-SPM32K-Biblica-10M": {
+      "description": "Makaru-SPM32K-Biblica-10M: GPT model trained on Bible text",
       "tokenizer": "models/bible_32000.model",
       "weights": "models/GPTbible40.pth",
       "config": {
@@ -24,9 +27,26 @@
         "n_embd": 256,
         "block_size": 128
       },
-      "tags": ["smaller", "faster"]
+      "tags": [
+        "larger",
+        "fast"
+      ]
     },
-
+    "Makaru-SPM8K-Biblica-4M": {
+      "description": "Makaru-SPM8K-Biblica-4M: GPT model trained on Bible text",
+      "tokenizer": "models/bible_8000.model",
+      "weights": "models/GPTbible40_spm8k.pth",
+      "config": {
+        "n_layer": 3,
+        "n_head": 4,
+        "n_embd": 256,
+        "block_size": 128
+      },
+      "tags": [
+        "larger",
+        "faster"
+      ]
+    },
     "assyrian-placeholder-large": {
       "description": "Placeholder for a larger model (add weights file, e.g. GPTot80.pth)",
       "tokenizer": "models/assyrian_8000.model",
@@ -37,7 +57,10 @@
         "n_embd": 512,
         "block_size": 128
       },
-      "tags": ["larger", "higher-quality"],
+      "tags": [
+        "larger",
+        "higher-quality"
+      ],
       "disabled": true
     }
   }

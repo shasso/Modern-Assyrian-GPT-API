@@ -126,10 +126,10 @@ curl http://localhost:8000/models | jq
 Response:
 ```json
 {
-  "active": "Assur-SPM8K-Scribes-4M",
-  "default": "Assur-SPM8K-Scribes-4M",
+  "active": "Makaru-SPM8K-Scribes-4M",
+  "default": "Makaru-SPM8K-Scribes-4M",
   "models": {
-    "Assur-SPM8K-Scribes-4M": {
+    "Makaru-SPM8K-Scribes-4M": {
       "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
       "tokenizer": "models/ot_8000.model",
       "weights": "models/GPTot40.pth",
@@ -141,7 +141,7 @@ Response:
       },
       "tags": ["baseline", "fast"]
     },
-    "Assur-SPM32K-Biblica-10M": {
+    "Makaru-SPM32K-Biblica-10M": {
       "description": "GPT model trained on Modern Assyrian Old+New Testament text",
       "tokenizer": "models/bible_32000.model",
       "weights": "models/GPTbible40.pth",
@@ -163,7 +163,7 @@ Response:
 ```bash
 curl -X POST http://localhost:8000/models/select \
   -H 'Content-Type: application/json' \
-  -d '{"model_id":"Assur-SPM8K-Scribes-4M"}'
+  -d '{"model_id":"Makaru-SPM8K-Scribes-4M"}'
 ```
 
 #### Per-Request Model Override
@@ -173,7 +173,7 @@ curl -X POST http://localhost:8000/generate \
   -d '{
     "prompt": "ܫܠܡܐ",
     "max_new_tokens": 30,
-    "model_id": "Assur-SPM32K-Biblica-10M"
+    "model_id": "Makaru-SPM32K-Biblica-10M"
   }'
 ```
 
@@ -229,7 +229,7 @@ environment:
   - NVIDIA_VISIBLE_DEVICES=all       # Expose all GPUs
   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
   - PYTHONUNBUFFERED=1
-  - MODEL_ID=Assur-SPM8K-Scribes-4M  # Default model to load
+  - MODEL_ID=Makaru-SPM8K-Scribes-4M  # Default model to load
   - MODEL_MANIFEST_PATH=/app/models/manifest.json  # Model registry
 ```
 
@@ -240,9 +240,9 @@ The `models/manifest.json` file defines available models:
 ```json
 {
   "version": 1,
-  "default": "Assur-SPM8K-Scribes-4M",
+  "default": "Makaru-SPM8K-Scribes-4M",
   "models": {
-    "Assur-SPM8K-Scribes-4M": {
+    "Makaru-SPM8K-Scribes-4M": {
       "description": "Baseline Modern Assyrian GPT (3 layers, 256 dim)",
       "tokenizer": "models/ot_8000.model",
       "weights": "models/GPTot40.pth",
@@ -254,7 +254,7 @@ The `models/manifest.json` file defines available models:
       },
       "tags": ["baseline", "fast"]
     },
-    "Assur-SPM32K-Biblica-10M": {
+    "Makaru-SPM32K-Biblica-10M": {
       "description": "GPT model trained on Modern Assyrian Old+New Testament text",
       "tokenizer": "models/bible_32000.model",
       "weights": "models/GPTbible40.pth",
